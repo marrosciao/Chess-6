@@ -13,4 +13,4 @@ en passant,
 save game / load game.
 
 Preview
-![alt tag](https://raw.githubusercontent.com/SHeston/Chess-Game/master/path/to/preview_capture.png)
+![alt tag](https://raw.githubusercontent.com/SHeston/Chess-Game/master/path/to/chess_capture.png)
