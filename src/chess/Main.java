@@ -30,6 +30,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JLabel;
 import javax.swing.BoxLayout;
+import java.awt.Font;
 
 @SuppressWarnings("serial")
 public class Main extends JFrame implements MouseListener, MouseMotionListener {
@@ -43,7 +44,7 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 	int mouseX, mouseY;
 	public static ArrayList<Point> possibleM = new ArrayList<Point>();
 	public static Point isSelected;
-
+	public static boolean isAI = false;
 	public JLabel lblTurn;
 	/**
 	 * Launch the application.
@@ -67,8 +68,8 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 	public Main() {
 		setTitle("Chess");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 388, 509);
-		//setResizable(false);
+		setBounds(100, 100, 377, 510);
+		setResizable(false);
 		
 		JMenuBar menuBar = new JMenuBar();
 		JMenu mnGame = new JMenu("Game");
@@ -87,20 +88,25 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 		contentPane.setLayout(new BorderLayout(0, 0));
 		
 		JPanel Meta = new JPanel();
+		Meta.setBackground(Color.LIGHT_GRAY);
+		Meta.setForeground(Color.BLACK);
 		contentPane.add(Meta, BorderLayout.NORTH);
 		Meta.setLayout(new BoxLayout(Meta, BoxLayout.Y_AXIS));
 		
 		JPanel panel_3 = new JPanel();
+		panel_3.setBackground(new Color(255, 255, 255));
 		Meta.add(panel_3);
 		
 		JLabel lblNewLabel_3 = new JLabel(" ");
 		panel_3.add(lblNewLabel_3);
 		
 		JPanel panel_1 = new JPanel();
+		panel_1.setBackground(new Color(255, 255, 255));
 		Meta.add(panel_1);
 		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.X_AXIS));
 		
 		JPanel panel = new JPanel();
+		panel.setBackground(new Color(255, 255, 255));
 		panel_1.add(panel);
 		
 		JLabel lblNewLabel_1 = new JLabel("    ");
@@ -113,15 +119,17 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 		panel_1.add(lblNewLabel);
 		
 		JPanel panel_2 = new JPanel();
+		panel_2.setBackground(new Color(255, 255, 255));
 		Meta.add(panel_2);
 		
 		JLabel lblNewLabel_2 = new JLabel(" ");
 		panel_2.add(lblNewLabel_2);
 		
 		ui = new UserInterface();
-		newGame(); /* Create new game */
+		newGame();
 		
 		lblTurn = new JLabel(getPlayerTurn().toString() + "'s turn");
+		lblTurn.setFont(new Font("Dialog", Font.PLAIN, 19));
 		panel.add(lblTurn);
 		
 		ui.setBackground(Color.yellow);
@@ -134,7 +142,24 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 		mntmNewGame.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e)
 		    {
-		       newGame();
+		    	Object[] options = {"Play Human", "Play AI"};
+				int n = JOptionPane.showOptionDialog(ui,
+				"Play Against Human or AI ",
+				"New Game",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.DEFAULT_OPTION,
+				null,     
+				options,  //the titles of buttons
+				options[0]); //default button title	
+		    	
+		    	if(n == 0){
+		    		newGame();
+		    	} else if (n == 1){
+		    		newGameAI();
+		    	}  else {
+		    		newGame();
+		    	}
+		       
 		    }
 		});
 		
@@ -142,7 +167,6 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 		btnUndo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				undoPieceMove();
-				//undoPieceMove();
 				ui.repaint();
 			}
 		});
@@ -156,9 +180,22 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 		});
 	}
 	
-	public void newGame(){
+	public void newGameAI(){
 		player1 = new Person(false);
 		player2 = new AI(true);
+		isAI = true;
+		board = new Board();
+		turn = false;
+		System.out.println("New game");
+		possibleM = null;
+		isSelected = null;
+		ui.repaint();
+	}
+	
+	public void newGame(){
+		player1 = new Person(false);
+		player2 = new Person(true);
+		isAI = false;
 		board = new Board();
 		turn = false;
 		System.out.println("New game");
@@ -175,23 +212,31 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 	}
 	
 	public void undoPieceMove(){
-		if(turn){
-			if(player1.getMoveHistory().size() > 0){
-				nextTurn();
+		if(isAI == true){
+			if(player1.playerMoveHistory.size() == 0 && 
+					player1.playerMoveHistory.size() == 0){
+				turn = false;
 			}
 			player1.undoMove(board);
-		} else {
-			if(player2.getMoveHistory().size() > 0){
-				nextTurn();
-			}
 			player2.undoMove(board);
+		} else {
+			if(turn){
+				if(player1.getMoveHistory().size() > 0){
+					nextTurn();
+				}
+				player1.undoMove(board);
+			} else {
+				if(player2.getMoveHistory().size() > 0){
+					nextTurn();
+				}
+				player2.undoMove(board);
+			}
 		}
 	}
 	
 	public void nextTurn(){
 		turn = !turn;
 		lblTurn.setText(getPlayerTurn().toString() + "'s turn");
-		System.out.println("\n");
 		if(turn == true){
 			if(board.getKing(true).isCheckMate(board) && player2.getAllPossibleMoves(true, board).size() == 0){
 				System.out.println("White Wins");
@@ -201,11 +246,13 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 						"Congratulations",
 					    JOptionPane.PLAIN_MESSAGE);
 			} else {
-				Move move = ((AI) player2).execute(board, 1, player2);
-				//System.out.println(move);
-				move.movePiece(board);
-				player2.playerMoveHistory.add(move);
-				nextTurn();
+				if(isAI == true){
+					Move move = ((AI) player2).execute(board, 1, player2);
+					System.out.println(move);
+					move.movePiece(board);
+					player2.playerMoveHistory.add(move);
+					nextTurn();
+				}
 			}
 		} else if (turn == false){
 			
@@ -250,14 +297,11 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 			mouseX = e.getX();
 			mouseY = e.getY();
 			
-			//button one left click
 			if(e.getButton() == MouseEvent.BUTTON1){
 				
 				int x = (int)Math.floor(mouseX / tileSize);
 				int y = (int)Math.floor(mouseY / tileSize);
 				
-				//only black selected if turn is true
-				//get turn 
 				boolean turnColour = getTurn();
 				
 				if(board.getTile(x, y).getPiece() != null && board.getTile(x, y).getPiece().getColour() == turnColour){
@@ -289,7 +333,6 @@ public class Main extends JFrame implements MouseListener, MouseMotionListener {
 								} else {
 									player2.movePiece(x, y, board, piece);
 								}
-								//piece.move(x, y, board);
 								isSelected = null;
 								possibleM = null;
 								ui.repaint();
