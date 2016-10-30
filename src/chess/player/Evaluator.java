@@ -14,6 +14,7 @@ public class Evaluator {
 		counter+=rateMaterial(player, board);
 		counter+=rateMovaability(board, player, material);
 		counter+=rateAttack(board, player);
+		counter+=ratePieces(player, board);
 		return counter;
 	}
 	
@@ -25,28 +26,6 @@ public class Evaluator {
 			if(move.isCapture(board)){
 				Piece p = move.getCaptured(board);
 				if(p instanceof Pawn){
-					counter += 100;
-				} else if (p instanceof Rook){
-					counter += 400;
-				} else if (p instanceof Knight){
-					counter += 300;
-				} else if (p instanceof Bishop){
-					counter += 350;
-				} else if (p instanceof Queen){
-					counter += 900;
-				} else if (p instanceof King){
-					counter -= 1000000;
-				}
-			}
-		}
-		
-		ArrayList<Move> movesOpp = Main.getOpponent(player).getAllPossibleMoves(Main.getOpponent(player).getColour(), board);
-		
-
-		for(Move moveo : movesOpp){
-			if(moveo.isCapture(board)){
-				Piece p = moveo.getCaptured(board);
-				if(p instanceof Pawn){
 					counter -= 100;
 				} else if (p instanceof Rook){
 					counter -= 400;
@@ -57,10 +36,11 @@ public class Evaluator {
 				} else if (p instanceof Queen){
 					counter -= 900;
 				} else if (p instanceof King){
-					counter -= 1000000;
+				//	counter += 1000000;
 				}
 			}
 		}
+		
 		return counter;
 	}
 	
@@ -71,6 +51,65 @@ public class Evaluator {
 		if(moves.size() > movesOpp.size()){
 			for(int i = 0; i < moves.size(); i++){
 				counter -= 5 * 4;
+			}
+		}
+		return counter;
+	}
+	
+	public static int ratePieces(Player player, Board board){
+		int counter = 0;
+		
+		ArrayList<Piece> list = new ArrayList<Piece>();
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				Piece p = board.getTile(i, j).getPiece();
+				if(p != null && p.getColour() == player.getColour()){
+					list.add(p);
+				}
+			}
+		}
+		
+		for(int k = 0; k < list.size(); k++){
+			Piece p = list.get(k);
+			if(p instanceof Pawn){
+				counter += 100;
+			} else if (p instanceof Rook){
+				counter += 400;
+			} else if (p instanceof Knight){
+				counter += 300;
+			} else if (p instanceof Bishop){
+				counter += 350;
+			} else if (p instanceof Queen){
+				counter += 900;
+			} else if (p instanceof King){
+				//counter += 1000000;
+			}
+		}
+		
+		ArrayList<Piece> list1 = new ArrayList<Piece>();
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				Piece p = board.getTile(i, j).getPiece();
+				if(p != null && p.getColour() == !(player.getColour())){
+					list1.add(p);
+				}
+			}
+		}
+		
+		for(int k = 0; k < list1.size(); k++){
+			Piece p = list1.get(k);
+			if(p instanceof Pawn){
+				counter = 100;
+			} else if (p instanceof Rook){
+				counter -= 400;
+			} else if (p instanceof Knight){
+				counter -= 300;
+			} else if (p instanceof Bishop){
+				counter -= 350;
+			} else if (p instanceof Queen){
+				counter -= 900;
+			} else if (p instanceof King){
+				//counter -= 1000000;
 			}
 		}
 		

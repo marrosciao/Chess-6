@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -12,6 +13,7 @@ import chess.Board;
 import chess.Main;
 import chess.Tile;
 import chess.piece.King;
+import chess.player.Move;
 
 public class UserInterface extends JPanel{
 	
@@ -24,6 +26,8 @@ public class UserInterface extends JPanel{
 		drawBoard(g);
 		
 		kingCheckHighlight(Main.board, g);
+		
+		previousMoveHighlight(g);
 		
 		selectTileHighlight(g);
 		
@@ -85,6 +89,39 @@ public class UserInterface extends JPanel{
 					g.fillRect(itemX * tileSize, itemY * tileSize, tileSize, tileSize);
 				}
 			}
+		}
+	}
+	
+	public void previousMoveHighlight(Graphics g){
+		if(Main.turn == true){
+			ArrayList<Move> player1Hist = Main.player1.playerMoveHistory;
+			if(player1Hist.size() > 0){
+				Move pm = player1Hist.get(player1Hist.size() - 1);
+				int itemX = pm.getCurrentPosition().x;
+				int itemY = pm.getCurrentPosition().y;
+				g.setColor(new Color(102,205,170));
+				g.fillRect(itemX * tileSize, itemY * tileSize, tileSize, tileSize);
+				int movX = pm.getMovePosition().x;
+				int movY = pm.getMovePosition().y;
+				g.setColor(new Color(102,205,170, 175));
+				g.fillRect(movX * tileSize, movY * tileSize, tileSize, tileSize);
+			}
+		} else if (Main.turn == false) {
+			ArrayList<Move> player2Hist = Main.player2.playerMoveHistory;
+			if(player2Hist.size() > 0){
+				Move pm = player2Hist.get(player2Hist.size() - 1);
+				int itemX = pm.getCurrentPosition().x;
+				int itemY = pm.getCurrentPosition().y;
+				g.setColor(new Color(102,205,170));
+				g.fillRect(itemX * tileSize, itemY * tileSize, tileSize, tileSize);
+				int movX = pm.getMovePosition().x;
+				int movY = pm.getMovePosition().y;
+				g.setColor(new Color(102,205,170, 175));
+				g.fillRect(movX * tileSize, movY * tileSize, tileSize, tileSize);
+			}
+			
+		} else {
+			
 		}
 	}
 	
