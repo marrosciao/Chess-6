@@ -12,6 +12,9 @@ castling,
 en passant,
 save game / load game.
 
+latest update:
+added move hilight
+
 Preview
 -------------
 ![alt tag](https://raw.githubusercontent.com/SHeston/Chess-Game/master/chess_capture.PNG)
