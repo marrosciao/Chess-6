@@ -13,7 +13,7 @@ en passant,
 save game / load game.
 
 latest update:
-added move hilight
+added move highlight
 
 Preview
 -------------
