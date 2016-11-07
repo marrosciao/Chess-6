@@ -2,7 +2,7 @@
 A Basic Chess Game created with Java
 
 Has AI that uses alphabeta algorithm
-(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)
+
 
 
 TODO: 
@@ -14,6 +14,9 @@ save game / load game.
 
 latest update:
 added move highlight
+
+To fix:
+(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)
 
 Preview
 -------------
