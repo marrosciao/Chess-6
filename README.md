@@ -16,7 +16,7 @@ latest update:
 added move highlight
 
 To fix:
-(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)
+<!--(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)-->
 
 Preview
 -------------
