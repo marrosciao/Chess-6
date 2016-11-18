@@ -15,8 +15,8 @@ save game / load game.
 latest update:
 added move highlight
 
-To fix:
-<!--(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)-->
+<!--To fix:
+(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)-->
 
 Preview
 -------------
