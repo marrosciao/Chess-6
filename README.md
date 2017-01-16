@@ -3,7 +3,7 @@ A Basic Chess Game created with Java </br>
 
 Not yet finished </br>
 Currently fixing/improving the AI
-=======
+
 
 Preview
 -------------
