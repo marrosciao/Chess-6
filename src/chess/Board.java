@@ -1,7 +1,7 @@
 package chess;
 
-import java.util.Arrays;
 import chess.piece.*;
+import chess.player.Alliance;
 
 /**
  * 
@@ -10,112 +10,92 @@ import chess.piece.*;
  * @version 03/10/2016
  *
  */
-public class Board {
+public class Board{
 
-	private Tile[][] board;
-	public static King white_king; /* Keeps track of the white king  */
-	public static King black_king; /* Keeps track of the black king */
+	private Piece[][] board;
 	
+	public static final int BOARD_ROW = 8;
+	public static final int BOARD_COLUMN = 8;
+	public static final int BOARD_SIZE = BOARD_ROW * BOARD_COLUMN;
+	public static final String BOARD_LETTERS = "abcdefgh";
+	public static final String BOARD_NUMBERS = "87654321";
+			//"87654321";
 	
 	public Board(){
-		board = new Tile[8][8];
-		for(int i = 0; i < 8; i++){
-			for(int j = 0; j < 8; j++){
-				setTile(i, j, new Tile(null));
-			}
-		}
-		initChessBoard();
+		this.board = new Piece[BOARD_ROW][BOARD_COLUMN];
 	}
 	
-	public void initChessBoard(){
-		
-		//set default layout of pieces for black
-		getTile(0,0).setPiece(new Rook(0,0,true));
-		getTile(1,0).setPiece(new Knight(1,0,true));
-		getTile(2,0).setPiece(new Bishop(2,0,true));
-		getTile(3,0).setPiece(new Queen(3,0,true));
-		getTile(4,0).setPiece(new King(4,0,true));
-		getTile(5,0).setPiece(new Bishop(5,0,true));
-		getTile(6,0).setPiece(new Knight(6,0,true));
-		getTile(7,0).setPiece(new Rook(7,0,true));
-		for(int i = 0; i < 8; i++){
-			getTile(i,1).setPiece(new Pawn(i, 1, true));
-		}
-		
-		//set default layout of pieces for white
-		getTile(0,7).setPiece(new Rook(0,7,false));
-		getTile(1,7).setPiece(new Knight(1,7,false));
-		getTile(2,7).setPiece(new Bishop(2,7,false));
-		getTile(3,7).setPiece(new Queen(3,7, false));
-		getTile(4,7).setPiece(new King(4,7,false));
-		getTile(5,7).setPiece(new Bishop(5,7,false));
-		getTile(6,7).setPiece(new Knight(6,7,false));
-		getTile(7,7).setPiece(new Rook(7,7,false));
-		for(int i = 0; i < 8; i++){
-			getTile(i,6).setPiece(new Pawn(i, 6, false));
-		}
-		
-		white_king = getKing(false);
-		black_king = getKing(true);
+	public Board(Piece[][] board){
+		this.board = new Piece[BOARD_ROW][BOARD_COLUMN];
+		clone2D(board);
 	}
 	
-	/**
-	 * Using deep cloning to copy the entire object hierarchy
-	 * @return
-	 */
-	//Tile[][] original
-	public Tile[][] deepCopy() {
-	    if (getTiles() == null) {
-	        return null;
-	    }
-
-	    final Tile[][] result = new Tile[getTiles().length][];
-	    for (int i = 0; i < getTiles().length; i++) {
-	        result[i] = Arrays.copyOf(getTiles()[i], getTiles()[i].length);
-	    }
-	    return result;
+	public void clone2D(Piece[][] board){
+		for(int i = 0; i < BOARD_SIZE; i++)
+			this.board[i%BOARD_ROW][i/BOARD_COLUMN] = clonePiece(board[i%BOARD_ROW][i/BOARD_COLUMN], this);
 	}
 	
+	private Piece clonePiece(Piece src, Board board){
+		if(src == null)
+			return null;
+		return newPieceCopy(src, board, src.getAllegiance(), src.getX(), src.getY());
+	}
 	
+	private Piece newPieceCopy(Piece src, Board board, Alliance alliance, int x, int y){
+		Piece copy = null;
+		if(src instanceof Pawn)
+			copy = new Pawn(x,y, alliance);
+		else if(src instanceof Queen)
+			copy = new Queen(x,y, alliance);
+		else if(src instanceof Knight)
+			copy = new Knight(x,y, alliance);
+		else if(src instanceof Bishop)
+			copy = new Bishop(x,y, alliance);
+		else if(src instanceof Rook)
+			copy = new Rook(x,y, alliance);
+		else if(src instanceof King)
+			copy = new King(x,y, alliance);
+		else
+			copy = null;
+		return copy;
+	}
 	
-	public Tile[][] getTiles(){
+	public static String getSqaureName(int x, int y){
+		String subStrX = BOARD_LETTERS.substring(x, x+1);
+		String subStrY = BOARD_NUMBERS.substring(y, y+1);
+		return subStrX + subStrY;
+	}
+	
+	public Piece[][] getBoard(){
 		return board;
 	}
 	
-	public void setTiles(Tile[][] tiles){
-		this.board = tiles;
+	public Piece getPiece(int x, int y){
+		return this.board[x][y];
 	}
 	
-	public Tile getTile(int x, int y){
-		Tile tile = this.board[x][y];
-		return tile;
+	public void setTile(int x, int y, Piece piece){
+		this.board[x][y] = piece;
 	}
 	
-	public void setTile(int x, int y, Tile tile){
-		this.board[x][y] = tile;
+	public void clearTile(int x, int y){
+		this.board[x][y] = null;
 	}
 	
-	/**
-	 * A method to get the king
-	 * @param colour
-	 * @return King
-	 */
-	public King getKing(boolean colour){
-		Piece p = null;
-		for(int i = 0; i < 8; i++){
-			for(int j = 0; j < 8; j++){
-				if(this.getTile(i, j).isOccupied()){
-					p = this.getTile(i, j).getPiece();
-					
-					if(p instanceof King && p.getColour() == colour){
-						//System.out.println(p.toString()  + " "+ p.getX() + " " + p .getY());
-						return (King) p;
-					}
-				}
-			}
-		}
-		
-		return null;
+	public Boolean isOccupied(int x, int y){
+		if(getPiece(x,y) == null)
+			return false;
+		return true;
 	}
 	
+	public void clear(){
+		for(int i = 0; i < BOARD_SIZE; i++)
+			 board[i%BOARD_ROW][i/BOARD_COLUMN] = null;
+	}
+	
+	@Override
+	public String toString(){
+		return "Board";
+	}
+
 }

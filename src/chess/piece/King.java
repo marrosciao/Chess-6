@@ -4,255 +4,110 @@ import java.awt.Point;
 import java.util.ArrayList;
 
 import chess.Board;
+import chess.Move;
+import chess.player.Alliance;
+import chess.player.Player;
 
+
+/**
+ * needs testing
+ * @author 
+ *
+ */
 public class King extends Piece{
 	
-	static boolean isChecked;
-	static boolean isCheckMate;
-	
-	public King(int x, int y, Boolean colour) {
-		super(x, y, colour);
+	public King(int x, int y, Alliance alliance) {
+		super(x, y, alliance);
 		
 	}
 	
 	@Override
-	public ArrayList<Point> getPossibleMoves(Board board) {
-		ArrayList<Point> possibleMoves = new ArrayList<Point>();
-		
-		int tempx;
-		int tempy;
-		
-		for(int i = -1; i <= 1; i++){
-			for(int j = -1; j <= 1; j++){
-				tempx = this.x + i;
-				tempy = this.y + j;
-				
-				if(!(tempx == 0 && tempy == 0)) {
-					if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-						if (board.getTile(tempx, tempy).isOccupied() == false || board.getTile(tempx, tempy).getPiece().getColour() != this.colour) {
-								if(this.isSafe(tempx,tempy, board)){
-									possibleMoves.add(new Point(tempx, tempy));
-								}
-						}
-					}
+	public ArrayList<Move> getPossibleMoves(Board board) {
+		ArrayList<Move> moves = new ArrayList<Move>();
+		for(int i = -1; i <= 1; i ++){
+			for(int j = -1; j <= 1; j ++){
+				if(!(i == 0 && j == 0) && isSafeMove(board, this.x + i, this.y + j)){
+					moves.add(newMove(board, new Point(this.x + i, this.y + j)));
 				}
 			}
 		}
-		
-		return possibleMoves;
+		return moves;
 	}
 	
-	public Boolean isCheck(Board board){
-		if(this.isSafe(this.x, this.y, board) == false)
-			return true;
+	private boolean isSafeMove(Board board, int i, int j){
+		if(isWithinBounds(i, j)) {
+			if(!board.isOccupied(i, j) || board.getPiece(i, j).getAllegiance() != this.allegiance){
+				if(isCheckAtPoint(board ,new Point(i,j)) == false){
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 	
-	public Boolean isCheckMate(Board board){
-		if(this.isCheck(board) && this.getPossibleMoves(board).size() == 0)
-			return true;
+	private boolean isCheckAtPoint(Board board, Point point){
+		Board clone = new Board(board.getBoard());
+		
+		//dangerous and expensive try to redo
+		clone.clearTile(this.x, this.y); /*remove king*/
+		clone.clearTile(point.x, point.y);	/*remove piece at point*/
+		
+		Player opponent = getOpposition(this.allegiance);
+		ArrayList<Move> tmp =  getAllOpponentAttacks(clone , opponent.getAllReamianingPieceMoves(clone));
+		
+		if(opponent != null){
+			for(Move move : tmp){
+				Point dest = move.getMovePosition();
+				if(point.equals(dest)){
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 	
-	public Boolean isStaleMate(Board board){
-		//if king isnt in check and all pieces have no possible moves
-		return false;
+	private ArrayList<Move> getAllOpponentAttacks(Board board, ArrayList<Move> moves){
+		ArrayList<Move> tmp = new ArrayList<Move>();
+		
+		for(Move move : moves) {
+			if(move.getPiece() instanceof Pawn){
+				Pawn pawn = (Pawn) move.getPiece();
+				tmp.addAll(pawn.getAttackMoves(board));
+			} else if(move.getPiece() instanceof King){
+				King king = (King) move.getPiece();
+				tmp.addAll(king.getLegalAttacks(board));
+			}
+			else{
+				tmp.add(move);
+			}
+		}
+		return tmp;
 	}
 	
-	//return true if safe
-	public Boolean isSafe(int x, int y, Board board){
-		Piece tempKing = this;
-		board.getTile(tempKing.x, tempKing.y).clearPiece();
-		
-		int tempy;
-		int tempx;
-		
-		//checking left / right and up / down
-		for(int horizontal = -1; horizontal <= 1; horizontal += 2 ){
-			try{
-				tempx = x + horizontal;
-				
-				while(tempx >=0 || tempx < 8){
-					if(board.getTile(tempx, y).isOccupied() == false){
-						//continue;
-					} else if(board.getTile(tempx, y).getPiece().getColour() == this.colour ||
-							board.getTile(tempx, y).getPiece() instanceof King){
-						break;
-					} else {
-						if(board.getTile(tempx, y).getPiece() instanceof Rook || board.getTile(tempx, y).getPiece() instanceof Queen){
-							board.getTile(tempKing.x, tempKing.y).setPiece(this);
-							return false;
-						} else {
-							break;
+	public ArrayList<Move> getLegalAttacks(Board board){
+		ArrayList<Move> attacks = new ArrayList<Move>();
+		int destx;
+		int desty;
+		for(int i = -1; i <= 1; i ++){
+			for(int j = -1; j <= 1; j ++){
+				if(!(i == 0 && j == 0)){
+					destx = this.x + i;
+					desty = this.y + j;
+					if(isWithinBounds(destx, desty)) {
+						if(!board.isOccupied(destx, desty) || board.getPiece(destx, desty).getAllegiance() != this.allegiance){
+							attacks.add(newMove(board, new Point(destx,desty)));
 						}
 					}
-					
-					tempx += horizontal;
-				
-				}
-			} catch (Exception e) {
-				
-			}
-		}
-		
-		for(int vertical = -1; vertical <= 1; vertical += 2 ){
-			try{
-				tempy = y + vertical;
-				
-				while(tempy>=0 || tempy < 8){
-					if(board.getTile(x, tempy).isOccupied() == false){
-						//break;
-					} else if(board.getTile(x, tempy).getPiece().getColour() == this.colour ||
-							board.getTile(x, tempy).getPiece() instanceof King){
-						break;
-					} else {
-						if(board.getTile(x, tempy).getPiece() instanceof Rook || board.getTile(x, tempy).getPiece() instanceof Queen){
-							board.getTile(tempKing.x, tempKing.y).setPiece(this);
-							return false;
-						} else {
-							break;
-						}
-					}
-					tempy += vertical;
-				}
-			} catch (Exception e) {
-				
-			}
-		}
-		
-		//check diagonals
-		for(int i = -1; i <= 1; i += 2){
-			for(int j = -1; j <= 1; j += 2){
-				try{
-					tempx = x + i;
-					tempy = y + j;
-					
-					while(tempx >=0 || tempx < 8 || tempy >= 0 || tempy < 8){
-						if(board.getTile(tempx, tempy).isOccupied() == false){
-							//continue;
-						} else if(board.getTile(tempx, tempy).getPiece().getColour() == this.colour){
-							break;
-						} else {
-							if(board.getTile(tempx, tempy).getPiece() instanceof Bishop || board.getTile(tempx, tempy).getPiece() instanceof Queen){
-								board.getTile(tempKing.x, tempKing.y).setPiece(this);
-								return false;
-							} else {
-								break;
-							}
-						}
-						tempx += i;
-						tempy += j;
-					}
-					
-				} catch(Exception e){
-					
-				}
-				
-			}
-		}
-		
-		//check knight
-		for(int k = -1; k <= 1; k += 2){
-			for(int l = -2; l <= 2; l += 4){
-				tempx = x + k;
-				tempy = y + l;
-				
-				if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-					if(board.getTile(tempx, tempy).isOccupied() == true 
-							&& board.getTile(tempx, tempy).getPiece().colour != this.colour
-							&& board.getTile(tempx, tempy).getPiece() instanceof Knight){
-						board.getTile(tempKing.x, tempKing.y).setPiece(this);
-						return false;
-					}
 				}
 			}
 		}
-		
-		for(int s = -1; s <= 1; s += 2){
-			for(int t = -2; t <= 2; t += 4){
-				tempx = x + t;
-				tempy = y + s;
-				
-				if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-					if(board.getTile(tempx, tempy).isOccupied() == true 
-							&& board.getTile(tempx, tempy).getPiece().colour != this.colour
-							&& board.getTile(tempx, tempy).getPiece() instanceof Knight){
-						board.getTile(tempKing.x, tempKing.y).setPiece(this);
-						return false;
-					}
-				}
-			}
-		}
-		
-		
-		//check pawn, might be the other way round
-		//true = black false = white
-		if(this.colour == true){
-			tempx = x;
-			tempy = y + 1;
 			
-			for(int o = -1; o <= 1; o += 2){
-				tempx = x + o;
-				if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-					if(board.getTile(tempx, tempy).isOccupied() == true 
-							&& board.getTile(tempx, tempy).getPiece().colour == false
-							&& board.getTile(tempx, tempy).getPiece() instanceof Pawn){
-						board.getTile(tempKing.x, tempKing.y).setPiece(this);
-						return false;
-					}
-				}
-			}
-
-		} else if (this.colour == false){
-			tempx = x;
-			//somthing wierd with tempy should be tempy = this.y + 1
-			tempy = y - 1;
-
-			
-			for(int p = -1; p <= 1; p += 2){
-				tempx = x + p;
-				if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-					if(board.getTile(tempx, tempy).isOccupied() == true 
-							&& board.getTile(tempx, tempy).getPiece().colour == true
-							&& board.getTile(tempx, tempy).getPiece() instanceof Pawn){
-						board.getTile(tempKing.x, tempKing.y).setPiece(this);
-						return false;
-					}
-				}
-			}
-		}
-				
-		//check king
-		//not sure this works
-		for(int q = -1; q <= 1; q++){
-			for(int r = -1; r <= 1; r++){
-				tempx = x + q;
-				tempy = y + r;
-				
-				if(!(tempx == 0 && tempy == 0)) {
-					if ((tempx >= 0 && tempx < 8 && tempy >= 0 && tempy < 8)) {
-						if (board.getTile(tempx, tempy).isOccupied() == true 
-								&& board.getTile(tempx, tempy).getPiece().getColour() != this.colour
-								&& board.getTile(tempx, tempy).getPiece() instanceof King) {
-							board.getTile(tempKing.x, tempKing.y).setPiece(this);
-							return false;
-						}
-					}
-				}
-			}
-		}
-
-		board.getTile(tempKing.x, tempKing.y).setPiece(this);
-		return true;
+		return attacks;
 	}
 	
 	@Override
 	public String toString(){
-		if(this.getColour() == true){
-			return "black_king";
-		} else {
-			return "white_king";
-		}
+		return "" + (allegiance == Alliance.BLACK ? "black_king" : "white_king");
 	}
-
+	 
 }

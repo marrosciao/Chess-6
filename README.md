@@ -1,16 +1,7 @@
 # Chess-Game
-A Basic Chess Game created with Java
+A Basic Chess Game created with Java </br>
 
-Has AI that uses alphabeta algorithm
-(Bug: When increased depth > 1 for some reason removes king and creates null pointer exception, currently fixing it)
-
-
-TODO: 
-scoreboard, 
-pawn promotion, 
-castling, 
-en passant,
-save game / load game.
+Currently fixing/improving the AI
 
 Preview
 -------------

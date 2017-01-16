@@ -4,143 +4,24 @@ import java.awt.Point;
 import java.util.ArrayList;
 
 import chess.Board;
+import chess.Game;
+import chess.Move;
+import chess.player.Alliance;
+import chess.player.Player;
 
 public abstract class Piece{
 
-	protected boolean colour;
+	protected Alliance allegiance;
 	protected int x, y;
+	protected final static int MAX_ITERATIONS = 8; 
 	
-	public Piece(int x, int y, Boolean colour){
-		this.colour = colour;
+	public Piece(int x, int y, Alliance alliance){
+		this.allegiance = alliance;
 		this.x = x;
 		this.y = y;
 	}
-
-	/**
-	 * Makes move on the board
-	 * 
-	 * @param x
-	 * @param y
-	 * @param board
-	 */
-	public void move(int x, int y, Board board){
-		int oldPosX = this.x;
-		int oldPosY = this.y;
-		
-		ArrayList<Point> possibleMoves = this.getPossibleMoves(board);
-		for(Point moves : possibleMoves ){
-			int pointX = moves.x;
-			int pointY = moves.y;
-			if(x == pointX && y == pointY) {
-				board.getTile(pointX, pointY).setPiece(this);
-				
-				board.getTile(pointX, pointY).getPiece().setX(pointX);
-				board.getTile(pointX, pointY).getPiece().setY(pointY);
-				board.getTile(oldPosX, oldPosY).clearPiece();
-			} else {
-				//System.out.println("cannot make move");
-			}
-		}
-	}
 	
-	
-	/**
-	 * Filter possible moves for pieces if the king is in check.
-	 * Pieces move to protect the king when in check.
-	 * 
-	 * @param piece
-	 * @param possibleMoves
-	 * @return
-	 */
-	public ArrayList<Point> getPossibleMovesFiltered(Board board){
-		ArrayList<Point> filteredList = new ArrayList<Point>();
-		ArrayList<Point> copy = this.getPossibleMoves(board);
-		Board checkBoard = board;
-		Piece getPiece = null; /* This keeps the piece in this variable, 
-		 							so the piece can be replaced on the board*/
-		
-		for(int i = 0; i < copy.size(); i++){
-			int tempx = copy.get(i).x;
-			int tempy = copy.get(i).y;
-			
-			if(checkBoard.getTile(tempx, tempy).isOccupied()){
-				getPiece = checkBoard.getTile(tempx, tempy).getPiece();
-			}
-			
-			checkBoard.getTile(tempx, tempy).setPiece(this);
-			
-			King king = board.getKing(true);
-			if(this.getColour() == true){
-				king = board.getKing(true);
-			} else {
-				king = board.getKing(false);
-			}
-			
-			if(!king.isCheck(checkBoard)){
-				filteredList.add(copy.get(i));
-			}
-			
-			if(getPiece != null){
-				checkBoard.getTile(tempx, tempy).setPiece(getPiece);
-				getPiece = null;
-			} else {
-				checkBoard.getTile(tempx, tempy).clearPiece();
-			}
-		}
-		
-		return filteredList;
-	}
-	
-	/**
-	 * Filters possible moves if moving this piece puts the king in danger
-	 * 
-	 * @param board
-	 * @return
-	 */
-	public ArrayList<Point> putsKingInCheck(Piece p, Board board){
-		ArrayList<Point> filteredList = new ArrayList<Point>();
-		ArrayList<Point> copy = this.getPossibleMoves(board);
-		Piece getPiece = null; /* This keeps the piece in this variable, 
-									so the piece can be replaced on the board*/
-		
-		board.getTile(this.getX(), this.getY()).clearPiece();
-		
-		for(int i = 0; i < copy.size(); i++){
-			int tempx = copy.get(i).x;
-			int tempy = copy.get(i).y;
-			
-			if(board.getTile(tempx, tempy).isOccupied()){
-				getPiece = board.getTile(tempx, tempy).getPiece();
-			}
-			
-			board.getTile(tempx, tempy).setPiece(this);
-			
-			King king = board.getKing(true);
-			if(this.getColour() == true){
-				king = board.getKing(true);
-			} else {
-				king = board.getKing(false);
-			}
-			
-			if(!king.isCheck(board)){
-				filteredList.add(copy.get(i));
-			}
-			
-			if(getPiece != null){
-				board.getTile(tempx, tempy).setPiece(getPiece);
-				getPiece = null;
-			} else {
-				board.getTile(tempx, tempy).clearPiece();
-			}
-		}
-		
-		board.getTile(this.getX(), this.getY()).setPiece(this);
-		
-		return filteredList;
-	}
-	
-	
-	public ArrayList<Point> getPossibleMoves(Board board) {
+	public ArrayList<Move> getPossibleMoves(Board board) {
 		return null;
 	}
 	
@@ -152,6 +33,10 @@ public abstract class Piece{
 		return this.y;
 	}
 	
+	public Point getPosition(){
+		return new Point(this.x, this.y);
+	}
+	
 	public void setX(int x){
 		this.x = x;
 	}
@@ -160,21 +45,111 @@ public abstract class Piece{
 		this.y = y;
 	}
 	
-	public Boolean getColour(){
-		return colour;
+	public void setPosition(int x, int y){
+		this.x = x;
+		this.y = y;
 	}
 	
-
-	public void setColour(Boolean colour){
-		this.colour = colour;
+	public Alliance getAllegiance(){
+		return allegiance;
 	}
 	
-	public String toString(){
-		if(this.getColour() == true){
-			return "black_piece";
-		} else {
-			return "white_piece";
+	protected static Player getPartnership(Alliance alliance){
+		return Game.getPlayer(alliance);
+	}
+	
+	protected static Player getOpposition(Alliance alliance){
+		return Game.getPlayer(alliance.next());
+	}
+	
+	protected boolean isWithinBounds(int x, int y){
+		if(!(x >=0 && x < Board.BOARD_ROW && y >= 0 && y < Board.BOARD_COLUMN))
+			return false;
+		return true;
+	}
+	
+	protected boolean isEnemy(Board board, int x, int y){
+		if(board.isOccupied(x, y) && board.getPiece(x, y).getAllegiance() != this.getAllegiance())
+			return true;
+		return false;
+	}
+	
+	protected boolean isAlly(Board board, int x, int y){
+		if(board.isOccupied(x, y) && board.getPiece(x, y).getAllegiance() == this.getAllegiance())
+			return true;
+		return false;
+	}
+	
+	protected Move newMove(Board board, Point dest){
+		return new Move(board, getPosition(), dest, this);
+	}
+	
+	/**
+	 * 	if 		
+	 *				there is more than 1 threatening piece then only the king can move
+	 *	else if 
+	 *				there is only one threatening piece then get all positions the 
+	 *				attacking piece can move (except from the last move which 
+	 *				would be the king) and add it to the array of threatening 
+	 *				points including the position of the attacking piece, if the
+	 *				piece is a pawn or knight then just add the current position.
+	 *	then (when calculating possible moves)
+	 *				check if match all possible moves against the threatening square
+	 *				if there is a match that add it to the list of possible moves if not
+	 *				then don't.
+	 * 
+	 * 
+	 * @param board
+	 * @return
+	 */
+	
+	//all instances of class piece used expect for king and pawn
+	protected ArrayList<Move> iterateDirection(Board board, int i, int j, int iterations){
+		ArrayList<Move> moves = new ArrayList<Move>();
+		Point dest = new Point(x + i, y + j);
+		
+		int n = 0;
+		while(isWithinBounds(dest.x, dest.y) && n < iterations){
+			if(!board.isOccupied(dest.x, dest.y)){
+				moves.add(newMove(board, new Point(dest.x, dest.y)));
+			} else if (isEnemy(board, dest.x, dest.y)){
+				moves.add(newMove(board, dest));
+				break;
+			} else if(isAlly(board, dest.x, dest.y)){
+				break;
+			}
+			
+			dest.translate(i, j);
+			n++;
 		}
+		return moves;
+	}
+	
+	//const north = -1, south = +1, east = +1, west = -1
+	protected ArrayList<Move> addDiagonalMoves(Board board){
+		ArrayList<Move> moves = new ArrayList<Move>();
+		for(int i = -1; i <= 1; i += 2){
+			for(int j = -1; j <= 1; j += 2){
+				moves.addAll(iterateDirection(board, i, j, MAX_ITERATIONS));
+			}
+		}
+		return moves;
+	}
+	
+	protected ArrayList<Move> addVerticalMoves(Board board){
+		ArrayList<Move> moves = new ArrayList<Move>();
+		for(int vertical = -1; vertical <= 1; vertical += 2){
+			moves.addAll(iterateDirection(board, 0, vertical, MAX_ITERATIONS));
+		}
+		return moves;
+	}
+	
+	protected ArrayList<Move> addHorizontalMoves(Board board){
+		ArrayList<Move> moves = new ArrayList<Move>();
+		for(int horizontal = -1; horizontal <= 1; horizontal += 2){
+			moves.addAll(iterateDirection(board, horizontal, 0, MAX_ITERATIONS));
+		}
+		return moves;
 	}
 
 }

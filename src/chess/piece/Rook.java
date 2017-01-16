@@ -1,76 +1,28 @@
 package chess.piece;
 
-import java.awt.Point;
 import java.util.ArrayList;
 
 import chess.Board;
+import chess.Move;
+import chess.player.Alliance;
 
 public class Rook extends Piece{
 	
-	public Rook(int x, int y, Boolean colour) {
-		super(x, y, colour);
+	public Rook(int x, int y, Alliance alliance) {
+		super(x, y, alliance);
 	}
 
 	@Override
-	public ArrayList<Point> getPossibleMoves(Board board){
-		
-		ArrayList<Point> possibleMoves = new ArrayList<Point>();
-		int tempx;
-		int tempy;
-		
-		for(int horizontal = -1; horizontal <= 1; horizontal += 2 ){
-			try{
-				tempx = this.x + horizontal;
-			
-				while(tempx >=0 || tempx < 8){
-					if(board.getTile(tempx, this.y).isOccupied() == false){
-						possibleMoves.add(new Point(tempx, this.y));
-					} else if(board.getTile(tempx, this.y).getPiece().getColour() == this.colour || 
-							board.getTile(tempx, this.y).getPiece() instanceof King){
-						break;
-					} else {
-						possibleMoves.add(new Point(tempx, this.y));
-						break;
-					}
-					
-					tempx += horizontal;
-				
-				}
-			} catch (Exception e){}
-			
-		}
-		
-		for(int vertical = -1; vertical <= 1; vertical += 2 ){
-			try{
-				tempy = this.y + vertical;
-				
-				while(tempy>=0 || tempy < 8){
-					if(board.getTile(this.x, tempy).isOccupied() == false){
-						possibleMoves.add(new Point(this.x, tempy));
-					} else if(board.getTile(this.x, tempy).getPiece().getColour() == this.colour  || 
-							board.getTile(this.x, tempy).getPiece() instanceof King){
-						break;
-					} else {
-						possibleMoves.add(new Point(this.x, tempy));
-						break;
-					}
-					tempy += vertical;
-				}
-			} catch (Exception e) {
-				
-			}
-		}
-	
-		return possibleMoves;
-}
+	public ArrayList<Move> getPossibleMoves(Board board){
+		ArrayList<Move> moves = new ArrayList<Move>();
+		moves.addAll(addVerticalMoves(board));
+		moves.addAll(addHorizontalMoves(board));
+		return moves;
+	}
 	
 	@Override
 	public String toString(){
-		if(this.getColour() == true){
-			return "black_rook";
-		} else {
-			return "white_rook";
-		}
+		return "" + (allegiance == Alliance.BLACK ? "black_rook" : "white_rook");
 	}
-
+ 
 }

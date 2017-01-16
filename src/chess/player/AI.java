@@ -1,88 +1,99 @@
 package chess.player;
-
+/**
+ * Basic AI using minimax algorithm
+ */
 import java.util.ArrayList;
 
 import chess.Board;
-import chess.Main;
+import chess.Game;
+import chess.Move;
 
 public class AI extends Player{
-
+	
 	public Move bestMove = null;
-	public AI(boolean colour){
-		super(colour);
-
+	private int MaxDepth = 1;
+	public static int boardEval = 0;
+	public AI(Alliance alliance){
+		//this.allegiance = alliance;
+		super(alliance);
 	}
-
-	public Move execute(final Board board,
-			final int depth, Player player) {
+	
+	public Move search(final Board board, final int depth) {
 
 		Move bestMove = null;
-		int highestSeenValue = Integer.MIN_VALUE;
-		int lowestSeenValue = Integer.MAX_VALUE;
+		int maxVal = Integer.MIN_VALUE;
+		int minVal = Integer.MAX_VALUE;
 		int currentValue = 0;
+		//White minimising, Black maximising player
 
-		ArrayList<Move> numMoves = player.getAllPossibleMoves(player.getColour(), board);
-		for (final Move move : numMoves) {
-
-			move.movePiece(board);
-			player.playerMoveHistory.add(move);
+		for (final Move move : getAllAvailableMoves(board)) {
+			Board clone = new Board(board.getBoard());
+			movePiece(clone, move);
 			
-			if(player.getColour() == false){
-				currentValue = min(board, depth - 1, highestSeenValue, lowestSeenValue, player);
+			if(getAllegiance() == Alliance.WHITE){
+				currentValue = min(clone, depth + 1, maxVal, minVal);
 			} else {
-				currentValue = max(board, depth - 1, highestSeenValue, lowestSeenValue, player);
+				currentValue = max(clone, depth + 1, maxVal, minVal);
 			}
 	
-			if (player.getColour() == true && currentValue > highestSeenValue) {
-				highestSeenValue = currentValue;
+			if (getAllegiance() == Alliance.BLACK && currentValue > maxVal) {
+				maxVal = currentValue;
 				bestMove = move;
 			}
-			else if (player.getColour() == false && currentValue < lowestSeenValue) {
-				lowestSeenValue = currentValue;
+			else if (getAllegiance() == Alliance.WHITE && currentValue < minVal) {
+				minVal = currentValue;
 				bestMove = move;
 			}
-			player.undoMove(board);
-			
 		}
+		System.out.println(bestMove.toString() + " " + (Game.getTurn() == Alliance.WHITE ? minVal : maxVal));
 		return bestMove;
 	}
-
-	private int max(Board board, int depth, int alpha, int beta, Player player) {
-		ArrayList<Move> numMoves = player.getAllPossibleMoves(player.getColour(), board);
-		if(depth == 0 || numMoves.size() == 0 
-				|| board.getKing(player.getColour()).isCheckMate(board) == true){
-			 return -(Evaluator.evaluate(board, player));
+	
+	private int max(final Board b, int depth, int alpha, int beta){
+		if(isEndGame(b) || depth > MaxDepth){
+			return Evaluator.evaluate(b);
 		}
-		int currentHighest = alpha;
-		for(Move move : numMoves){
-			move.movePiece(board);
-			currentHighest = min(board, depth - 1, alpha, beta, Main.getOpponent(player));
-			player.undoMove(board);
-			if(currentHighest > beta){
-				return beta;
-			}
-		}
-		
-		return currentHighest;
-	}
-
-	private int min(Board board, int depth, int alpha, int beta, Player player) {
-		ArrayList<Move> numMoves = player.getAllPossibleMoves(player.getColour(), board);
-		if(depth == 0 || numMoves.size() == 0 
-				|| board.getKing(player.getColour()).isCheckMate(board) == true){
-			 return +(Evaluator.evaluate(board, player));
-		}
-		int currentLowest = beta;
-		for(Move move : numMoves){
-			move.movePiece(board);
-			currentLowest = max(board, depth - 1,alpha, beta, Main.getOpponent(player));
-			player.undoMove(board);
-			if(currentLowest < alpha){
-				return alpha;
-			}
+		int max = Integer.MIN_VALUE;
+		Player currentPlayer = Game.getPlayer(Alliance.BLACK);
+		for(Move m : this.getAllAvailableMoves(b)){
+			Board c = new Board(b.getBoard());
+			boardEval++;
+			this.movePiece(c, m);
+			int x = min(c, depth+1, alpha, beta);
+			//this.undoMove(c, m);
+			if(x>max) max = x;
+			if(x>alpha) alpha = x;
+			if(alpha>=beta) return alpha;
 		}
 		
-		return currentLowest;
+		return max;
 	}
+	
+	private int min(final Board b, int depth, int alpha, int beta) {
+		if(isEndGame(b) || depth > MaxDepth){
+			return Evaluator.evaluate(b);
+		}
+		int min = Integer.MAX_VALUE;
+		Player currentPlayer = Game.getPlayer(Alliance.WHITE);
+		for(Move m : currentPlayer.getAllAvailableMoves(b)){
+			Board c = new Board(b.getBoard());
+			boardEval++;
+			currentPlayer.movePiece(c, m);
+			int x = max(c, depth+1, alpha, beta);
+			//currentPlayer.undoMove(c, m);
+			if(x<min) min = x;
+			if(x<beta) beta = x;
+			if(alpha>=beta) return beta;
+		}
+		
+		return min;
+	}
+
+	private boolean isEndGame(Board board){
+		if(Game.getPlayer(Game.getTurn()).isCheckMate(board) || this.isCheckMate(board))
+			return true;
+		return false;
+	}
+	
 }
 
